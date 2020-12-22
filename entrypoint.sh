@@ -60,7 +60,7 @@ if [ "${kernel_pattern}" ] && [ "${dtb_pattern}" ]; then
   mkdir -p "${fat_folder}"
   fatcat -x "${fat_folder}" "${fat_path}"
 
-  root=/dev/mmcblk0p2
+  root=/dev/mmcblk0p3
 
   echo "Searching for kernel='${kernel_pattern}'"
   kernel=$(find "${fat_folder}" -name "${kernel_pattern}")
@@ -79,11 +79,14 @@ exec ${emulator} \
   --machine "${machine}" \
   --cpu arm1176 \
   --m "${memory}" \
+  --append "rootwait earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=${root} elevator=deadline panic=1 ${extra}" \
   --drive "format=raw,file=${image_path}" \
   ${nic} \
   --dtb "${dtb}" \
   --kernel "${kernel}" \
-  --append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=${root} rootwait panic=1 ${extra}" \
   --no-reboot \
   --display none \
   --serial mon:stdio
+
+#  --append "rootwait earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=${root} init=/spacepi/setup.sh elevator=deadline panic=1 ${extra}" \
+#root=/dev/mmcblk0p3 rootwait fsck.repair=yes ro console=tty0 elevator=deadline init=/spacepi/setup.sh
