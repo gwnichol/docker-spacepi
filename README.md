@@ -1,6 +1,8 @@
-<div align="center">
-	<img width="256" src="media/logo.svg">
-</div>
+# spacepi-docker
+
+This is a fork of dockerpi for the spacepi system. The armel.iso build image must be placed at the root of the repo, then run `./run.sh`
+
+It will open an ssh port to localhost:5022 by default
 
 # dockerpi
 
