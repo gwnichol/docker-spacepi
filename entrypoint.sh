@@ -26,22 +26,23 @@ if [ "${target}" = "pi1" ]; then
   root=/dev/sda2
   extra=''
   nic='--net nic --net user,hostfwd=tcp::5022-:22'
+  cmdline='rootwait earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=${root} elevator=deadline'
 elif [ "${target}" = "pi2" ]; then
   emulator=qemu-system-arm
   machine=raspi2
   memory=1024m
   kernel_pattern=kernel7.img
   dtb_pattern=bcm2709-rpi-2-b.dtb
-  extra='dwc_otg.fiq_fsm_enable=0'
   nic='-netdev user,id=net0,hostfwd=tcp::5022-:22 -device usb-net,netdev=net0'
+  cmdline=''
 elif [ "${target}" = "pi3" ]; then
   emulator=qemu-system-aarch64
   machine=raspi3
   memory=1024m
   kernel_pattern=kernel8.img
   dtb_pattern=bcm2710-rpi-3-b-plus.dtb
-  extra='dwc_otg.fiq_fsm_enable=0'
   nic='-netdev user,id=net0,hostfwd=tcp::5022-:22 -device usb-net,netdev=net0'
+  cmdline=''
 else
   echo "Target ${target} not supported"
   echo "Supported targets: pi1 pi2 pi3"
@@ -67,10 +68,21 @@ if [ "${kernel_pattern}" ] && [ "${dtb_pattern}" ]; then
 
   echo "Searching for dtb='${dtb_pattern}'"
   dtb=$(find "${fat_folder}" -name "${dtb_pattern}")
+
+  cmdline=$( sed \
+    -e 's/console=[^[:space:]]*\ \?//' \
+    -e 's/dwc_otg\.lpm_enable=[^[:space:]]*\ \?//' \
+    -e 's/dwc_otg\.fig_fsm_enable=[^[:space:]]*\ \?//' \
+	-e 's/$/ rootwait console=ttyAMA0,115200 dwc_otg.lpm_enable=0 dwc_otg.fiq_fsm_enable=0/' \
+	< "${fat_folder}/cmdline.txt" \
+    )
+
+  echo "Using cmdline='${cmdline}'"
+
 fi
 
-if [ "${kernel}" = "" ] || [ "${dtb}" = "" ]; then
-  echo "Missing kernel='${kernel}' or dtb='${dtb}'"
+if [ "${kernel}" = "" ] || [ "${dtb}" = "" ] || [ "${cmdline}" = ""]; then
+  echo "Missing kernel='${kernel}' or dtb='${dtb}' or cmdline='${cmdline}'"
   exit 2
 fi
 
@@ -79,12 +91,11 @@ exec ${emulator} \
   --machine "${machine}" \
   --cpu arm1176 \
   --m "${memory}" \
-  --append "rootwait earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=${root} elevator=deadline panic=1 ${extra}" \
+  --append "${cmdline}" \
   --drive "format=raw,file=${image_path}" \
   ${nic} \
   --dtb "${dtb}" \
   --kernel "${kernel}" \
-  --no-reboot \
   --display none \
   --serial mon:stdio
 
