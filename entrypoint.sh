@@ -73,7 +73,8 @@ if [ "${kernel_pattern}" ] && [ "${dtb_pattern}" ]; then
     -e 's/console=[^[:space:]]*\ \?//' \
     -e 's/dwc_otg\.lpm_enable=[^[:space:]]*\ \?//' \
     -e 's/dwc_otg\.fig_fsm_enable=[^[:space:]]*\ \?//' \
-	-e 's/$/ rootwait console=ttyAMA0,115200 dwc_otg.lpm_enable=0 dwc_otg.fiq_fsm_enable=0/' \
+    -e 's/panic=[^[:space:]]*\ \?//' \
+	-e 's/$/ rootwait console=ttyAMA0,115200 dwc_otg.lpm_enable=0 dwc_otg.fiq_fsm_enable=0 panic=1/' \
 	< "${fat_folder}/cmdline.txt" \
     )
 
